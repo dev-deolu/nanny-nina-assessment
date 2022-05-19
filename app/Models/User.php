@@ -59,4 +59,30 @@ class User extends Authenticatable
             $user->uuid = (string) Str::uuid(); // Create uuid when a new user is to be created
         });
     }
+
+    /**
+     * Get the role associated with the user.
+     */
+    public function role()
+    {
+        return $this->hasOne(Role::class, 'id', 'role_id');
+    }
+
+    /**
+     * Scope a query to only include fileted users.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param array filters
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeFilter($query, array $filters)
+    {
+        $query->when($filters['name'] ?? null, function ($query, $name) {
+            $query->where('name', 'like', '%' . $name . '%');
+        })->when($filters['timezone'] ?? null, function ($query, $timezone) {
+            $query->where('timezone', $timezone);
+        })->when($filters['level'] ?? null, function ($query, $level) {
+            $query->where('level', $level);
+        });
+    }
 }
