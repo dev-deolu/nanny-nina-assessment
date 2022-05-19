@@ -1,0 +1,54 @@
+version: "3.7"
+services:
+  app:
+    build:
+      args:
+        user: nina
+        uid: 1000
+      context: ./
+      dockerfile: Dockerfile
+    image: nina_assessment
+    container_name: nina_assessment
+#    env_file: docker-compose/app/.env.example
+    restart: always
+    working_dir: /var/www/
+    volumes:
+      - ./config.yml:/etc/docker/registry/config.yml
+      - ./:/var/www
+    networks:
+      - nina_app
+
+  nginx:
+    image: nginx:alpine
+    container_name: nina_app_nginx
+    restart: always
+    ports:
+      - 8401:80
+    volumes:
+      - ./:/var/www
+      - ./docker-compose/nginx:/etc/nginx/conf.d/
+    networks:
+      - nina_app
+
+  cronjob:
+      build:
+        context: ./
+        dockerfile: nina_app.cron.Dockerfile
+      container_name: nina_app_cronjob
+      volumes:
+          - ./:/var/www
+      restart: always
+
+  supervisor:
+    container_name: nina_app_supervisor
+    image: redditsaved/laravel-supervisord:latest
+    restart: unless-stopped
+    env_file: docker-compose/supervisor/.env.example
+    volumes:
+      - ./:/var/www
+    networks:
+      - nina_app
+
+networks:
+  nina_app:
+    driver: bridge
